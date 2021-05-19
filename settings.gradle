@@ -1,0 +1,2 @@
+rootProject.name = "AndroidBackground"
+include ':app'
