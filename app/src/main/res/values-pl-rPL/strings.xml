@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AndroidTło</string>
+    <string name="address">Adres:</string>
+    <string name="download_info">POBIERZ INFORMACJE</string>
+    <string name="default_file_size">0</string>
+    <string name="file_size">Rozmiar pliku:</string>
+    <string name="file_type">Typ pliku:</string>
+    <string name="none">brak</string>
+    <string name="download_file">POBIERZ PLIK</string>
+    <string name="bytes_downloaded">Pobrano bajtów:</string>
+</resources>

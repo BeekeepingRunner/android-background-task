@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">AndroidBackground</string>
+    <string name="address">Address:</string>
+    <string name="download_info">DOWNLOAD INFO</string>
+    <string name="default_file_size">0</string>
+    <string name="file_size">File size:</string>
+    <string name="file_type">File type:</string>
+    <string name="none">none</string>
+    <string name="download_file">DOWNLOAD FILE</string>
+    <string name="bytes_downloaded">Bytes downloaded:</string>
 </resources>
