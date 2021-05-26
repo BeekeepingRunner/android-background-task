@@ -9,4 +9,5 @@
     <string name="none">brak</string>
     <string name="download_file">POBIERZ PLIK</string>
     <string name="bytes_downloaded">Pobrano bajtów:</string>
+    <string name="test_address">https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.4.36.tar.xz</string>
 </resources>
