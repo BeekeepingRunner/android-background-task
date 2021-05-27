@@ -4,9 +4,16 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import javax.net.ssl.HttpsURLConnection;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -17,16 +24,40 @@ public class MainActivity extends AppCompatActivity {
     private Button buttonDownloadFile;
     private TextView textViewBytes;
 
-    private static class DownloadInfoTask extends AsyncTask<String, Void, FileInfo> {
+    private class DownloadInfoTask extends AsyncTask<String, Void, FileInfo> {
 
         @Override
         protected FileInfo doInBackground(String... strings) {
-            return null;
+
+            HttpsURLConnection connection = null;
+            FileInfo fileInfo = null;
+            try {
+                URL url = new URL(strings[0]);
+                connection = (HttpsURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+
+                int contentSize = connection.getContentLength();
+                String contentType = connection.getContentType();
+                fileInfo = new FileInfo(contentSize, contentType);
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+            finally {
+                if (connection != null)
+                    connection.disconnect();
+            }
+
+            return fileInfo;
         }
 
         @Override
         protected void onPostExecute(FileInfo fileInfo) {
-            super.onPostExecute(fileInfo);
+
+            if (fileInfo != null) {
+                textViewFileSize.setText(fileInfo.getFileSize());
+                textViewFileType.setText(fileInfo.getFileType());
+            }
         }
     }
 
@@ -36,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         getWidgetReferences();
-
+        setButtonDownloadInfoOnClick();
     }
 
     private void getWidgetReferences() {
@@ -46,5 +77,17 @@ public class MainActivity extends AppCompatActivity {
         textViewFileType = findViewById(R.id.textViewFileTypeText);
         buttonDownloadFile = findViewById(R.id.buttonDownloadFile);
         textViewBytes = findViewById(R.id.textViewBytesDownloadedNumber);
+    }
+
+    private void setButtonDownloadInfoOnClick() {
+        buttonDownloadInfo.setOnClickListener((View v) -> {
+
+            String webAddress = editTextAddress.getText().toString().trim();
+            if (webAddress.startsWith("https://")) {
+
+                DownloadInfoTask downloadInfoTask = new DownloadInfoTask();
+                downloadInfoTask.execute(webAddress);
+            }
+        });
     }
 }
