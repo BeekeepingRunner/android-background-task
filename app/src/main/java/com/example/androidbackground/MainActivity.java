@@ -17,18 +17,16 @@ public class MainActivity extends AppCompatActivity {
     private Button buttonDownloadFile;
     private TextView textViewBytes;
 
-    private static class DownloadInfoTask extends AsyncTask {
+    private static class DownloadInfoTask extends AsyncTask<String, Void, FileInfo> {
 
-        // Connect with server, get file info (name, type), return FileInfo
         @Override
-        protected Object doInBackground(Object[] objects) {
+        protected FileInfo doInBackground(String... strings) {
             return null;
         }
 
-        // display fetched info in GUI
         @Override
-        protected void onPostExecute(Object o) {
-            super.onPostExecute(o);
+        protected void onPostExecute(FileInfo fileInfo) {
+            super.onPostExecute(fileInfo);
         }
     }
 
