@@ -9,7 +9,20 @@ import android.app.TaskStackBuilder;
 import android.content.Intent;
 import android.content.Context;
 import android.os.Build;
+import android.os.Environment;
 import android.util.Log;
+
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
+
+import javax.net.ssl.HttpsURLConnection;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -23,8 +36,12 @@ public class FileDownloadService extends IntentService {
     private static final String ACTION_FILE_DOWNLOAD =
             "com.example.androidbackground.action.FILE_DOWNLOAD";
 
-    public static final int ID_NOTIFICATIONS = 1;
+    private static int DATABLOCK_SIZE = 1024;
+    private int bytesFetched = 0;
 
+    // parameters
+    private static final String FILE_URL = "file_url";
+    public static final int ID_NOTIFICATIONS = 1;
     private static final String ID_CHANNEL = "notification_channel";
 
     public FileDownloadService() {
@@ -38,10 +55,11 @@ public class FileDownloadService extends IntentService {
      * @see IntentService
      */
     // TODO: Customize helper method
-    public static void startActionFileDownload(Context context, int notificationsParam)
+    public static void startActionFileDownload(Context context, String fileURL, int notificationsParam)
     {
         Intent intent = new Intent(context, FileDownloadService.class);
         intent.setAction(ACTION_FILE_DOWNLOAD);
+        intent.putExtra(FILE_URL, fileURL);
         intent.putExtra(String.valueOf(ID_NOTIFICATIONS), notificationsParam);
         context.startService(intent);
     }
@@ -54,13 +72,16 @@ public class FileDownloadService extends IntentService {
         // prepareNotificationChannel();
         // startForeground(ID_NOTIFICATIONS, createNotification());
 
+        Log.d("FileDownloadService", "Service has started downloading a file...");
+
         if (intent != null)
         {
             final String action = intent.getAction();
             if (ACTION_FILE_DOWNLOAD.equals(action))
             {
                 final int param = intent.getIntExtra(String.valueOf(ID_NOTIFICATIONS), 0);
-                handleActionFileDownload(param);
+                String fileURL = intent.getStringExtra(FILE_URL);
+                handleActionFileDownload(fileURL, param);
             }
             else {
                 Log.e("FileDownloadService", "Unknown action");
@@ -126,12 +147,46 @@ public class FileDownloadService extends IntentService {
      * Handle action Foo in the provided background thread with the provided
      * parameters.
      */
-    private void handleActionFileDownload(int param) {
+    private void handleActionFileDownload(String fileURL, int notificationParam) {
 
-        // notificationManager.notify(ID_NOTIFICATIONS, createNotification());
+        // notificationManager.notify(notificationParam, createNotification());
 
-        throw new UnsupportedOperationException("Not yet implemented");
-        
+        FileOutputStream fileOutput = null;
+        try {
+            // preparing a file to save to
+            URL url = new URL(fileURL);
+            File tempFile = new File(url.getFile());
+            File outFile = new File(
+                    Environment.getExternalStorageDirectory()
+                    + File.separator
+                    + tempFile.getName()
+            );
+            if (outFile.exists())
+                outFile.delete();
+
+            // file downloading...
+            HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+
+            InputStream fromWebStream = connection.getInputStream();
+            DataInputStream reader = new DataInputStream(fromWebStream);
+            FileOutputStream fileOutputStream = new FileOutputStream(outFile.getPath());
+
+            byte buffer[] = new byte[DATABLOCK_SIZE];
+            int downloaded = reader.read(buffer, 0, DATABLOCK_SIZE);
+            while (downloaded != -1) {
+                fileOutputStream.write(buffer, 0, downloaded);
+                bytesFetched += downloaded;
+                downloaded = reader.read(buffer, 0, DATABLOCK_SIZE);
+            }
+
+            if (fromWebStream != null) {
+                fromWebStream.close();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }
