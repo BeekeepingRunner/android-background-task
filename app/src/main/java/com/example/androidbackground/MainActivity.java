@@ -73,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
 
         getWidgetReferences();
         setButtonDownloadInfoOnClick();
+        setButtonDownloadFileOnClick();
     }
 
     private void getWidgetReferences() {
@@ -93,6 +94,14 @@ public class MainActivity extends AppCompatActivity {
                 DownloadInfoTask downloadInfoTask = new DownloadInfoTask();
                 downloadInfoTask.execute(webAddress);
             }
+        });
+    }
+
+    private void setButtonDownloadFileOnClick() {
+        buttonDownloadFile.setOnClickListener((View v) -> {
+
+            FileDownloadService.startActionFileDownload(
+                    MainActivity.this, FileDownloadService.ID_NOTIFICATIONS);
         });
     }
 }
