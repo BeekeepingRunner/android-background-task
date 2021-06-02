@@ -1,93 +1,137 @@
 package com.example.androidbackground;
 
 import android.app.IntentService;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.TaskStackBuilder;
 import android.content.Intent;
 import android.content.Context;
+import android.os.Build;
+import android.util.Log;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
  * a service on a separate handler thread.
- * <p>
- * <p>
- * TODO: Customize class - update intent actions, extra parameters and static
- * helper methods.
  */
+// Service to download a file to the main catalogue on a memory card. It sends notification too.
 public class FileDownloadService extends IntentService {
 
-    // TODO: Rename actions, choose action names that describe tasks that this
-    // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
-    private static final String ACTION_FOO = "com.example.androidbackground.action.FOO";
-    private static final String ACTION_BAZ = "com.example.androidbackground.action.BAZ";
+    NotificationManager notificationManager;
 
-    // TODO: Rename parameters
-    private static final String EXTRA_PARAM1 = "com.example.androidbackground.extra.PARAM1";
-    private static final String EXTRA_PARAM2 = "com.example.androidbackground.extra.PARAM2";
+    private static final String ACTION_FILE_DOWNLOAD =
+            "com.example.androidbackground.action.FILE_DOWNLOAD";
+
+    public static final int ID_NOTIFICATIONS = 1;
+
+    private static final String ID_CHANNEL = "notification_channel";
 
     public FileDownloadService() {
         super("FileDownloadService");
     }
 
     /**
-     * Starts this service to perform action Foo with the given parameters. If
+     * Starts this service to perform action FileDownload with the given parameters. If
      * the service is already performing a task this action will be queued.
      *
      * @see IntentService
      */
     // TODO: Customize helper method
-    public static void startActionFoo(Context context, String param1, String param2) {
+    public static void startActionFileDownload(Context context, int notificationsParam)
+    {
         Intent intent = new Intent(context, FileDownloadService.class);
-        intent.setAction(ACTION_FOO);
-        intent.putExtra(EXTRA_PARAM1, param1);
-        intent.putExtra(EXTRA_PARAM2, param2);
+        intent.setAction(ACTION_FILE_DOWNLOAD);
+        intent.putExtra(String.valueOf(ID_NOTIFICATIONS), notificationsParam);
         context.startService(intent);
     }
 
-    /**
-     * Starts this service to perform action Baz with the given parameters. If
-     * the service is already performing a task this action will be queued.
-     *
-     * @see IntentService
-     */
-    // TODO: Customize helper method
-    public static void startActionBaz(Context context, String param1, String param2) {
-        Intent intent = new Intent(context, FileDownloadService.class);
-        intent.setAction(ACTION_BAZ);
-        intent.putExtra(EXTRA_PARAM1, param1);
-        intent.putExtra(EXTRA_PARAM2, param2);
-        context.startService(intent);
-    }
-
+    // Actually executes a task
     @Override
     protected void onHandleIntent(Intent intent) {
-        if (intent != null) {
+
+        // notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        // prepareNotificationChannel();
+        // startForeground(ID_NOTIFICATIONS, createNotification());
+
+        if (intent != null)
+        {
             final String action = intent.getAction();
-            if (ACTION_FOO.equals(action)) {
-                final String param1 = intent.getStringExtra(EXTRA_PARAM1);
-                final String param2 = intent.getStringExtra(EXTRA_PARAM2);
-                handleActionFoo(param1, param2);
-            } else if (ACTION_BAZ.equals(action)) {
-                final String param1 = intent.getStringExtra(EXTRA_PARAM1);
-                final String param2 = intent.getStringExtra(EXTRA_PARAM2);
-                handleActionBaz(param1, param2);
+            if (ACTION_FILE_DOWNLOAD.equals(action))
+            {
+                final int param = intent.getIntExtra(String.valueOf(ID_NOTIFICATIONS), 0);
+                handleActionFileDownload(param);
+            }
+            else {
+                Log.e("FileDownloadService", "Unknown action");
             }
         }
+        Log.d("FileDownloadService", "Service has finished the task");
+    }
+
+    private void prepareNotificationChannel() {
+
+        notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        // Android 8/Oreo requires notification channel
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+            CharSequence name = getString(R.string.app_name);
+            NotificationChannel channel = new NotificationChannel(
+                    ID_CHANNEL, name, NotificationManager.IMPORTANCE_LOW);
+
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+    private Notification createNotification() {
+
+        Intent notificationIntent = new Intent(this, FileDownloadService.class);
+        // Data for display, when user comes back to the application
+        // notificationIntent.putExtra();
+
+        // We build a stack of activities, that the user is waiting for after comeback.
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+        stackBuilder.addParentStack(FileDownloadService.class);
+        stackBuilder.addNextIntent(notificationIntent);
+        PendingIntent pendingIntent =
+                stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        // We build a notification
+        Notification.Builder notificationBuilder = new Notification.Builder(this);
+        notificationBuilder.setContentTitle(getString(R.string.notification_title))
+                //.setProgress(100, progressValue(), false)
+                .setContentIntent(pendingIntent)
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setWhen(System.currentTimeMillis())
+                .setPriority(Notification.PRIORITY_HIGH);
+
+        /* if downloading is still running...
+        if (...)
+        {
+            notificationBuilder.setOngoing(false);
+        } else {
+            notificationBuilder.setOngoing(true);
+        }
+         */
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            notificationBuilder.setChannelId(ID_CHANNEL);
+        }
+
+        return notificationBuilder.build();
     }
 
     /**
      * Handle action Foo in the provided background thread with the provided
      * parameters.
      */
-    private void handleActionFoo(String param1, String param2) {
-        // TODO: Handle action Foo
+    private void handleActionFileDownload(int param) {
+
+        // notificationManager.notify(ID_NOTIFICATIONS, createNotification());
+
         throw new UnsupportedOperationException("Not yet implemented");
+        
     }
 
-    /**
-     * Handle action Baz in the provided background thread with the provided
-     * parameters.
-     */
-    private void handleActionBaz(String param1, String param2) {
-        // TODO: Handle action Baz
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
 }
