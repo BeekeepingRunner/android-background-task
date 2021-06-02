@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -19,11 +20,12 @@ public class MainActivity extends AppCompatActivity {
 
     private EditText editTextAddress;
     private Button buttonDownloadInfo;
-    private TextView textViewFileSize;
-    private TextView textViewFileType;
+    private TextView textViewFileSizeNumber;
+    private TextView textViewFileTypeText;
     private Button buttonDownloadFile;
     private TextView textViewBytes;
 
+    // Task to run in a background
     private class DownloadInfoTask extends AsyncTask<String, Void, FileInfo> {
 
         @Override
@@ -55,8 +57,9 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(FileInfo fileInfo) {
 
             if (fileInfo != null) {
-                textViewFileSize.setText(fileInfo.getFileSize());
-                textViewFileType.setText(fileInfo.getFileType());
+
+                textViewFileSizeNumber.setText(String.valueOf(fileInfo.getFileSize()));
+                textViewFileTypeText.setText(fileInfo.getFileType());
             }
         }
     }
@@ -73,8 +76,8 @@ public class MainActivity extends AppCompatActivity {
     private void getWidgetReferences() {
         editTextAddress = findViewById(R.id.editTextAddress);
         buttonDownloadInfo = findViewById(R.id.buttonDownloadInfo);
-        textViewFileSize = findViewById(R.id.textViewFileSize);
-        textViewFileType = findViewById(R.id.textViewFileTypeText);
+        textViewFileSizeNumber = findViewById(R.id.textViewFileSizeNumber);
+        textViewFileTypeText = findViewById(R.id.textViewFileTypeText);
         buttonDownloadFile = findViewById(R.id.buttonDownloadFile);
         textViewBytes = findViewById(R.id.textViewBytesDownloadedNumber);
     }
