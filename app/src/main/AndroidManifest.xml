@@ -11,6 +11,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AndroidBackground">
+        <service
+            android:name=".FileDownloadService"
+            android:exported="false"></service>
+
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -19,6 +23,5 @@
             </intent-filter>
         </activity>
     </application>
-
 
 </manifest>
