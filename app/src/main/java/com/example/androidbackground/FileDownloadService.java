@@ -174,23 +174,24 @@ public class FileDownloadService extends IntentService {
             // file downloading...
             HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
+            bytesToDownload = connection.getContentLength();
+            bytesFetched = 0;
 
-            InputStream fromWebStream = connection.getInputStream();
-            DataInputStream reader = new DataInputStream(fromWebStream);
-            FileOutputStream fileOutputStream = new FileOutputStream(outFile.getPath());
+            try (InputStream fromWebStream = connection.getInputStream();
+                 FileOutputStream fileOutputStream = new FileOutputStream(outFile.getPath());
+                 DataInputStream reader = new DataInputStream(fromWebStream)) {
 
-            byte buffer[] = new byte[DATABLOCK_SIZE];
-            int downloaded = reader.read(buffer, 0, DATABLOCK_SIZE);
-            while (downloaded != -1) {
-                fileOutputStream.write(buffer, 0, downloaded);
-                bytesFetched += downloaded;
-                downloaded = reader.read(buffer, 0, DATABLOCK_SIZE);
+                byte buffer[] = new byte[DATABLOCK_SIZE];
+                int downloaded = reader.read(buffer, 0, DATABLOCK_SIZE);
+
+                while (downloaded != -1) {
+                    fileOutputStream.write(buffer, 0, downloaded);
+                    downloaded = reader.read(buffer, 0, DATABLOCK_SIZE);
+
+                    bytesFetched += downloaded;
+                    notificationManager.notify(notificationParam, createNotification());
+                }
             }
-
-            if (fromWebStream != null) {
-                fromWebStream.close();
-            }
-
         } catch (IOException e) {
             e.printStackTrace();
         }
