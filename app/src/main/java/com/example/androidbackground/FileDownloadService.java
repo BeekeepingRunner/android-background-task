@@ -64,7 +64,7 @@ public class FileDownloadService extends IntentService {
         context.startService(intent);
     }
 
-    // Actually executes a task
+    // Actually starts executing a task
     @Override
     protected void onHandleIntent(Intent intent) {
 
@@ -108,6 +108,7 @@ public class FileDownloadService extends IntentService {
     private Notification createNotification() {
 
         Intent notificationIntent = new Intent(this, FileDownloadService.class);
+
         // Data for display, when user comes back to the application
         // notificationIntent.putExtra();
 
@@ -144,7 +145,7 @@ public class FileDownloadService extends IntentService {
     }
 
     /**
-     * Handle action Foo in the provided background thread with the provided
+     * Handle action in the provided background thread with the provided
      * parameters.
      */
     private void handleActionFileDownload(String fileURL, int notificationParam) {
