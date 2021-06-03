@@ -36,8 +36,9 @@ public class FileDownloadService extends IntentService {
     private static final String ACTION_FILE_DOWNLOAD =
             "com.example.androidbackground.action.FILE_DOWNLOAD";
 
-    private static int DATABLOCK_SIZE = 1024;
-    private int bytesFetched = 0;
+    private static int DATABLOCK_SIZE = 8192;
+    private static int bytesFetched;
+    private static int bytesToDownload;
 
     // parameters
     private static final String FILE_URL = "file_url";
@@ -68,9 +69,9 @@ public class FileDownloadService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
 
-        // notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        // prepareNotificationChannel();
-        // startForeground(ID_NOTIFICATIONS, createNotification());
+        notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        prepareNotificationChannel();
+        startForeground(ID_NOTIFICATIONS, createNotification());
 
         Log.d("FileDownloadService", "Service has started downloading a file...");
 
@@ -82,12 +83,14 @@ public class FileDownloadService extends IntentService {
                 final int param = intent.getIntExtra(String.valueOf(ID_NOTIFICATIONS), 0);
                 String fileURL = intent.getStringExtra(FILE_URL);
                 handleActionFileDownload(fileURL, param);
+
+                notificationManager.notify(param, createNotification());
+                Log.d("FileDownloadService", "Service has finished the task");
             }
             else {
                 Log.e("FileDownloadService", "Unknown action");
             }
         }
-        Log.d("FileDownloadService", "Service has finished the task");
     }
 
     private void prepareNotificationChannel() {
@@ -114,7 +117,7 @@ public class FileDownloadService extends IntentService {
 
         // We build a stack of activities, that the user is waiting for after comeback.
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-        stackBuilder.addParentStack(FileDownloadService.class);
+        stackBuilder.addParentStack(MainActivity.class);
         stackBuilder.addNextIntent(notificationIntent);
         PendingIntent pendingIntent =
                 stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -122,20 +125,19 @@ public class FileDownloadService extends IntentService {
         // We build a notification
         Notification.Builder notificationBuilder = new Notification.Builder(this);
         notificationBuilder.setContentTitle(getString(R.string.notification_title))
-                //.setProgress(100, progressValue(), false)
+                .setProgress(100, progressValue(), false)
                 .setContentIntent(pendingIntent)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setWhen(System.currentTimeMillis())
                 .setPriority(Notification.PRIORITY_HIGH);
 
-        /* if downloading is still running...
-        if (...)
+        if (bytesFetched < bytesToDownload)
         {
-            notificationBuilder.setOngoing(false);
-        } else {
             notificationBuilder.setOngoing(true);
+        } else {
+            notificationBuilder.setOngoing(false);
+            notificationBuilder.setContentTitle(getString(R.string.notification_finished));
         }
-         */
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             notificationBuilder.setChannelId(ID_CHANNEL);
@@ -144,15 +146,19 @@ public class FileDownloadService extends IntentService {
         return notificationBuilder.build();
     }
 
+    private int progressValue() {
+        if (bytesToDownload != 0) {
+            return (int) ((bytesFetched / (bytesToDownload * 1.0) * 100));
+        }
+        else return 0;
+    }
+
     /**
      * Handle action in the provided background thread with the provided
      * parameters.
      */
     private void handleActionFileDownload(String fileURL, int notificationParam) {
 
-        // notificationManager.notify(notificationParam, createNotification());
-
-        FileOutputStream fileOutput = null;
         try {
             // preparing a file to save to
             URL url = new URL(fileURL);

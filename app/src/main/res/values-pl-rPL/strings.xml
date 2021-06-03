@@ -10,6 +10,7 @@
     <string name="download_file">POBIERZ PLIK</string>
     <string name="bytes_downloaded">Pobrano bajtów:</string>
     <string name="test_address">https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.4.36.tar.xz</string>
-    <string name="notification_title">Pobieranie pliku...</string>
+    <string name="notification_title">Pobieranie pliku</string>
     <string name="bad_url">Niepoprawny adres strony</string>
+    <string name="notification_finished">Zakończono pobieranie pliku</string>
 </resources>
