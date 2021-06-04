@@ -37,6 +37,10 @@ public class MainActivity extends AppCompatActivity {
     private TextView textViewBytes;
     private ProgressBar progressBar;
 
+    private final String FILE_SIZE_NUMBER = "file_size_number";
+    private final String FILE_TYPE = "file_type";
+    private final String BYTES_FETCHED = "bytes_fetched";
+
     String webAddress = "";
 
     private static final int CODE_WRITE_EXTERNAL_STORAGE = 1;
@@ -122,8 +126,29 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         getWidgetReferences();
+
+        if (savedInstanceState != null) {
+            restoreState(savedInstanceState);
+        }
+
         setButtonDownloadInfoOnClick();
         setButtonDownloadFileOnClick();
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putString(FILE_SIZE_NUMBER, textViewFileSizeNumber.getText().toString());
+        outState.putString(FILE_TYPE, textViewFileTypeText.getText().toString());
+        outState.putString(BYTES_FETCHED, textViewBytes.getText().toString());
+    }
+
+    private void restoreState(Bundle savedInstanceState) {
+
+        textViewFileSizeNumber.setText(savedInstanceState.getString(FILE_SIZE_NUMBER));
+        textViewFileTypeText.setText(savedInstanceState.getString(FILE_TYPE));
+        textViewBytes.setText(savedInstanceState.getString(BYTES_FETCHED));
     }
 
     private void getWidgetReferences() {
