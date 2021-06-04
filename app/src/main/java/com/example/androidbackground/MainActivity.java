@@ -115,7 +115,6 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(FileInfo fileInfo) {
 
             if (fileInfo != null) {
-
                 textViewFileSizeNumber.setText(String.valueOf(fileInfo.getFileSize()));
                 textViewFileTypeText.setText(fileInfo.getFileType());
             }
@@ -162,6 +161,8 @@ public class MainActivity extends AppCompatActivity {
         textViewBytes = findViewById(R.id.textViewBytesDownloadedNumber);
         progressBar = findViewById(R.id.progressBar);
     }
+
+
 
     private void setButtonDownloadInfoOnClick() {
         buttonDownloadInfo.setOnClickListener((View v) -> {
