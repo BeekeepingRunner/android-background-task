@@ -151,7 +151,7 @@ public class FileDownloadService extends IntentService {
                 .setPriority(Notification.PRIORITY_HIGH);
 
         if (progressInfo != null) {
-            notificationBuilder.setProgress(100, progressValue(), false);
+            notificationBuilder.setProgress(100, progressInfo.getProgress(), false);
 
             switch(progressInfo.getStatus()) {
 

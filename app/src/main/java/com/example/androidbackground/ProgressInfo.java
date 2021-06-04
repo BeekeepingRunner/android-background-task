@@ -47,6 +47,14 @@ public class ProgressInfo implements Parcelable {
             setStatus(FINISHED);
     }
 
+    // Returns an integer number in range [0:100]
+    public int getProgress() {
+        if (fileSize != 0) {
+            return (int) ((bytesFetched / (fileSize * 1.0) * 100));
+        }
+        else return 0;
+    }
+
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeInt(fileSize);
