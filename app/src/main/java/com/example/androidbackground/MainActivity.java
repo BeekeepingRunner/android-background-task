@@ -48,19 +48,21 @@ public class MainActivity extends AppCompatActivity {
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+
             Bundle bundle = intent.getExtras();
             ProgressInfo progressInfo = bundle.getParcelable(FileDownloadService.INFO);
-            // response to the announcement...
-            // ...
+
             switch (progressInfo.getStatus()) {
                 case ProgressInfo.IN_PROGRESS:
                     textViewBytes.setText(String.valueOf(progressInfo.getBytesFetched()));
                     progressBar.setProgress(progressInfo.getProgress());
                     break;
                 case ProgressInfo.FINISHED:
-                    textViewBytes.setText(String.valueOf(progressInfo.getBytesFetched()));
+                    textViewBytes.setText(String.valueOf(progressInfo.getFileSize()));
                     progressBar.setProgress(100);
                     break;
+                case ProgressInfo.ERROR:
+                    textViewBytes.setText(getString(R.string.notification_error));
             }
         }
     };
