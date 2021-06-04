@@ -3,8 +3,13 @@ package com.example.androidbackground;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -12,6 +17,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,10 +35,47 @@ public class MainActivity extends AppCompatActivity {
     private TextView textViewFileTypeText;
     private Button buttonDownloadFile;
     private TextView textViewBytes;
+    private ProgressBar progressBar;
 
     String webAddress = "";
 
     private static final int CODE_WRITE_EXTERNAL_STORAGE = 1;
+
+    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Bundle bundle = intent.getExtras();
+            ProgressInfo progressInfo = bundle.getParcelable(FileDownloadService.INFO);
+            // response to the announcement...
+            // ...
+            switch (progressInfo.getStatus()) {
+                case ProgressInfo.IN_PROGRESS:
+                    textViewBytes.setText(String.valueOf(progressInfo.getBytesFetched()));
+                    progressBar.setProgress(progressInfo.getProgress());
+                    break;
+                case ProgressInfo.FINISHED:
+                    textViewBytes.setText(String.valueOf(progressInfo.getBytesFetched()));
+                    progressBar.setProgress(100);
+                    break;
+            }
+        }
+    };
+
+    // Register the receiver
+    @Override
+    protected void onResume() {
+        super.onResume();
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                broadcastReceiver, new IntentFilter(FileDownloadService.NOTIFICATION)
+        );
+    }
+
+    // Unregister the receiver
+    @Override
+    protected void onPause() {
+        super.onPause();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
+    }
 
     // Task to run in a background
     private class DownloadInfoTask extends AsyncTask<String, Void, FileInfo> {
@@ -90,6 +133,7 @@ public class MainActivity extends AppCompatActivity {
         textViewFileTypeText = findViewById(R.id.textViewFileTypeText);
         buttonDownloadFile = findViewById(R.id.buttonDownloadFile);
         textViewBytes = findViewById(R.id.textViewBytesDownloadedNumber);
+        progressBar = findViewById(R.id.progressBar);
     }
 
     private void setButtonDownloadInfoOnClick() {
