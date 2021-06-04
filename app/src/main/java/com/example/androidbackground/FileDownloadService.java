@@ -6,11 +6,16 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.TaskStackBuilder;
+import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.Context;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
+import android.os.Parcel;
 import android.util.Log;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -31,22 +36,34 @@ import javax.net.ssl.HttpsURLConnection;
 // Service to download a file to the main catalogue on a memory card. It sends notification too.
 public class FileDownloadService extends IntentService {
 
-    NotificationManager notificationManager;
+    NotificationManager notificationManager = null;
+    ProgressInfo progressInfo = null;
 
     private static final String ACTION_FILE_DOWNLOAD =
             "com.example.androidbackground.action.FILE_DOWNLOAD";
+    private static final String FILE_URL = "file_url";
 
     private static int DATABLOCK_SIZE = 8192;
-    private static int bytesFetched;
-    private static int bytesToDownload;
+
+    // TODO: replace with ProgressInfo
+    private static int bytesFetched = 0;
+    private static int bytesToDownload = 0;
 
     // parameters
-    private static final String FILE_URL = "file_url";
     public static final int ID_NOTIFICATIONS = 1;
     private static final String ID_CHANNEL = "notification_channel";
 
+    public final static String NOTIFICATION = "com.example.androidbackground.receiver";
+    public final static String INFO = "info";
+
     public FileDownloadService() {
         super("FileDownloadService");
+    }
+
+    private void sendBroadcast(ProgressInfo progressInfo) {
+        Intent intent = new Intent(NOTIFICATION);
+        intent.putExtra(INFO, progressInfo);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     /**
@@ -84,7 +101,11 @@ public class FileDownloadService extends IntentService {
                 String fileURL = intent.getStringExtra(FILE_URL);
                 handleActionFileDownload(fileURL, param);
 
+                // test if needed
+                progressInfo.setStatus(ProgressInfo.FINISHED);
+                //
                 notificationManager.notify(param, createNotification());
+                sendBroadcast(progressInfo);
                 Log.d("FileDownloadService", "Service has finished the task");
             }
             else {
@@ -110,33 +131,41 @@ public class FileDownloadService extends IntentService {
 
     private Notification createNotification() {
 
-        Intent notificationIntent = new Intent(this, FileDownloadService.class);
+        Intent notificationIntent = new Intent(this, MainActivity.class);
 
         // Data for display, when user comes back to the application
         // notificationIntent.putExtra();
 
         // We build a stack of activities, that the user is waiting for after comeback.
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-        stackBuilder.addParentStack(MainActivity.class);
-        stackBuilder.addNextIntent(notificationIntent);
+        stackBuilder.addNextIntentWithParentStack(notificationIntent);
         PendingIntent pendingIntent =
                 stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
 
         // We build a notification
         Notification.Builder notificationBuilder = new Notification.Builder(this);
         notificationBuilder.setContentTitle(getString(R.string.notification_title))
-                .setProgress(100, progressValue(), false)
                 .setContentIntent(pendingIntent)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setWhen(System.currentTimeMillis())
                 .setPriority(Notification.PRIORITY_HIGH);
 
-        if (bytesFetched < bytesToDownload)
-        {
-            notificationBuilder.setOngoing(true);
-        } else {
-            notificationBuilder.setOngoing(false);
-            notificationBuilder.setContentTitle(getString(R.string.notification_finished));
+        if (progressInfo != null) {
+            notificationBuilder.setProgress(100, progressValue(), false);
+
+            switch(progressInfo.getStatus()) {
+
+                case ProgressInfo.IN_PROGRESS:
+                    notificationBuilder.setOngoing(true);
+                    break;
+                case ProgressInfo.FINISHED:
+                    notificationBuilder.setOngoing(false);
+                    notificationBuilder.setContentTitle(getString(R.string.notification_finished));
+                    break;
+                case ProgressInfo.ERROR:
+                    notificationBuilder.setOngoing(false);
+                    notificationBuilder.setContentTitle(getString(R.string.notification_error));
+            }
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -147,8 +176,8 @@ public class FileDownloadService extends IntentService {
     }
 
     private int progressValue() {
-        if (bytesToDownload != 0) {
-            return (int) ((bytesFetched / (bytesToDownload * 1.0) * 100));
+        if (progressInfo.getFileSize() != 0) {
+            return (int) ((progressInfo.getBytesFetched() / (progressInfo.getFileSize() * 1.0) * 100));
         }
         else return 0;
     }
@@ -174,8 +203,9 @@ public class FileDownloadService extends IntentService {
             // file downloading...
             HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
-            bytesToDownload = connection.getContentLength();
-            bytesFetched = 0;
+
+            progressInfo = new ProgressInfo(connection.getContentLength(), ProgressInfo.IN_PROGRESS);
+            sendBroadcast(progressInfo);
 
             try (InputStream fromWebStream = connection.getInputStream();
                  FileOutputStream fileOutputStream = new FileOutputStream(outFile.getPath());
@@ -188,7 +218,8 @@ public class FileDownloadService extends IntentService {
                     fileOutputStream.write(buffer, 0, downloaded);
                     downloaded = reader.read(buffer, 0, DATABLOCK_SIZE);
 
-                    bytesFetched += downloaded;
+                    progressInfo.addBytesFetched(downloaded);
+                    sendBroadcast(progressInfo);
                     notificationManager.notify(notificationParam, createNotification());
                 }
             }
