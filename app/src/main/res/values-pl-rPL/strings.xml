@@ -13,4 +13,5 @@
     <string name="notification_title">Pobieranie pliku</string>
     <string name="bad_url">Niepoprawny adres strony</string>
     <string name="notification_finished">Zakończono pobieranie pliku</string>
+    <string name="notification_error">Błąd podczas pobierania</string>
 </resources>

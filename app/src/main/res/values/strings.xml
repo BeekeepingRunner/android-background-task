@@ -12,4 +12,5 @@
     <string name="notification_title">Downloading a file</string>
     <string name="bad_url">Incorrect web address</string>
     <string name="notification_finished">Finished file downloading</string>
+    <string name="notification_error">Error during downloading</string>
 </resources>
