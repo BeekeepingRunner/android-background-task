@@ -13,4 +13,5 @@
     <string name="bad_url">Incorrect web address</string>
     <string name="notification_finished">Finished file downloading</string>
     <string name="notification_error">Error during downloading</string>
+    <string name="permission_rationale">File cannot be downloaded without permission</string>
 </resources>

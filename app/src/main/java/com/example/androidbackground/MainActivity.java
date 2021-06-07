@@ -22,11 +22,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.net.ssl.HttpsURLConnection;
 
+// App that can download a file from a given URL, monitor progress and send notification.
 public class MainActivity extends AppCompatActivity {
 
     private EditText editTextAddress;
@@ -45,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int CODE_WRITE_EXTERNAL_STORAGE = 1;
 
+    // Responsible for showing progress based on received information
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -83,9 +84,10 @@ public class MainActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
     }
 
-    // Task to run in a background
+    // Allows to get information about content from a given URL. It can run in the background.
     private class DownloadInfoTask extends AsyncTask<String, Void, FileInfo> {
 
+        // Gets content length and its type
         @Override
         protected FileInfo doInBackground(String... strings) {
 
@@ -111,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
             return fileInfo;
         }
 
+        // Prints fetched info
         @Override
         protected void onPostExecute(FileInfo fileInfo) {
 
@@ -121,6 +124,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Sets interface
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -162,8 +166,6 @@ public class MainActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
     }
 
-
-
     private void setButtonDownloadInfoOnClick() {
         buttonDownloadInfo.setOnClickListener((View v) -> {
 
@@ -184,26 +186,29 @@ public class MainActivity extends AppCompatActivity {
 
             webAddress = editTextAddress.getText().toString().trim();
             if (webAddress.startsWith("https://")) {
-
-                if (hasPermissions()) {
-                    FileDownloadService.startActionFileDownload(
-                            MainActivity.this, webAddress, FileDownloadService.ID_NOTIFICATIONS);
-                } else {
-                    if (permissionPreviouslyDenied()) {
-                        // TODO: explain why we need permissions ...
-                    }
-
-                    ActivityCompat.requestPermissions(this,
-                            new String[]{
-                                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-                            },
-                            CODE_WRITE_EXTERNAL_STORAGE);
-                }
-
+                permitAndRun(webAddress);
             } else {
                 Toast.makeText(MainActivity.this, R.string.bad_url, Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private void permitAndRun(String webAddress) {
+
+        if (hasPermissions()) {
+            FileDownloadService.startActionFileDownload(
+                    MainActivity.this, webAddress, FileDownloadService.ID_NOTIFICATIONS);
+        } else {
+            if (permissionPreviouslyDenied()) {
+                Toast.makeText(this, getString(R.string.permission_rationale), Toast.LENGTH_LONG).show();
+            }
+
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    },
+                    CODE_WRITE_EXTERNAL_STORAGE);
+        }
     }
 
     private boolean hasPermissions() {
@@ -223,21 +228,18 @@ public class MainActivity extends AppCompatActivity {
                                            @NonNull int[] decisions) {
 
         super.onRequestPermissionsResult(requestCode, permissions, decisions);
-        switch (requestCode) {
-            case CODE_WRITE_EXTERNAL_STORAGE:
-                if (permissions.length > 0
-                && permissions[0].equals(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                && decisions[0] == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == CODE_WRITE_EXTERNAL_STORAGE) {
+            if (permissions.length > 0
+                    && permissions[0].equals(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    && decisions[0] == PackageManager.PERMISSION_GRANTED) {
 
-                    FileDownloadService.startActionFileDownload(
-                            MainActivity.this, webAddress, FileDownloadService.ID_NOTIFICATIONS);
-                } else {
-                    // nothing to do without permission... :(
-                }
-                break;
-            default:
-                Log.e("onRequestPermissionsResult", "unknown request code");
-                break;
+                FileDownloadService.startActionFileDownload(
+                        MainActivity.this, webAddress, FileDownloadService.ID_NOTIFICATIONS);
+            } else {
+                // nothing to do without permission... :(
+            }
+        } else {
+            Log.e("onRequestPermissionsResult", "unknown request code");
         }
     }
 }
